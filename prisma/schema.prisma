@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model block {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type              String          @db.VarChar(255)
+  funnel_builder_id String?         @db.Uuid
+  created_at        DateTime        @default(now()) @db.Timestamp(6)
+  updated_at        DateTime        @default(now()) @db.Timestamp(6)
+  funnel_builder    funnel_builder? @relation(fields: [funnel_builder_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model funnel_builder {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description String?  @db.VarChar(255)
+  image       String?  @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  user_id     String   @db.Uuid
+  tenant_id   String   @db.VarChar(255)
+  block       block[]
+  user        user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model integration {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type       String   @db.VarChar(255)
+  user_id    String?  @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  user       user?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model pricing_plan {
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                   String              @db.VarChar(255)
+  funnels_limit          Int
+  monthly_visitors_limit Int
+  domains_limit          Int
+  created_at             DateTime            @default(now()) @db.Timestamp(6)
+  updated_at             DateTime            @default(now()) @db.Timestamp(6)
+  user_pricing_plan      user_pricing_plan[]
+}
+
+model user {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String              @unique @db.VarChar(255)
+  firstName         String?             @db.VarChar(255)
+  lastName          String?             @db.VarChar(255)
+  roq_user_id       String              @db.VarChar(255)
+  tenant_id         String              @db.VarChar(255)
+  created_at        DateTime            @default(now()) @db.Timestamp(6)
+  updated_at        DateTime            @default(now()) @db.Timestamp(6)
+  funnel_builder    funnel_builder[]
+  integration       integration[]
+  user_pricing_plan user_pricing_plan[]
+}
+
+model user_pricing_plan {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String?       @db.Uuid
+  pricing_plan_id String?       @db.Uuid
+  created_at      DateTime      @default(now()) @db.Timestamp(6)
+  updated_at      DateTime      @default(now()) @db.Timestamp(6)
+  pricing_plan    pricing_plan? @relation(fields: [pricing_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user            user?         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
